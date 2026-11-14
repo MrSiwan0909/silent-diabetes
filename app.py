@@ -422,7 +422,7 @@ CSS = f"""
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;600&family=Noto+Naskh+Arabic:wght@400;600&display=swap');
 
 body, .gradio-container {{background: #faf9f7 !important;}}
-.gradio-container {{max-width: 1150px !important; margin: auto !important; font-family: {BODY_FONT} !important;}}
+.gradio-container {{max-width: 880px !important; margin: auto !important; font-family: {BODY_FONT} !important;}}
 
 .sd-header {{text-align: center; padding: 34px 16px 26px 16px;}}
 .sd-pill {{display: inline-block; background: #1c1917; color: #ffffff !important; border-radius: 999px;
@@ -434,13 +434,38 @@ body, .gradio-container {{background: #faf9f7 !important;}}
 .sd-stat {{background: #ffffff; border: 1px solid #e7e5e4; border-radius: 999px; padding: 6px 14px;
            font-size: 13px; color: #1c1917 !important;}}
 
-.sd-section h3 {{font-family: {TITLE_FONT} !important; font-weight: 400 !important; font-size: 26px !important;
-                 color: #1c1917 !important; margin: 6px 0 2px 0 !important;}}
-#check-btn, #clear-btn {{border-radius: 999px !important; min-height: 50px; font-size: 16px !important;}}
+/* The form card: white, rounded, with plenty of space inside so nothing touches the edges */
+.sd-card {{background: #ffffff !important; border: 1px solid #e7e5e4 !important; border-radius: 22px !important;
+           padding: 28px 36px 32px 36px !important; gap: 0 !important;
+           box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 10px 30px rgba(0,0,0,0.05) !important;}}
+/* Remove the grey boxes Gradio puts around things inside the card */
+.sd-card .block, .sd-card .form, .sd-card .prose, .sd-card .wrap {{background: transparent !important;
+           border: none !important; box-shadow: none !important;}}
+
+/* Part headings (1. About the customer ...) */
+.sd-section {{padding: 22px 0 6px 0 !important;}}
+.sd-section h3 {{font-family: {TITLE_FONT} !important; font-weight: 400 !important; font-size: 28px !important;
+                 color: #1c1917 !important; margin: 0 !important;}}
+
+/* One question per row: question on the left, answer on the right, thin line between rows */
+.sd-qrow {{padding: 14px 0 !important; border-top: 1px solid #f0eeeb !important; align-items: center !important;
+           gap: 20px !important;}}
+.sd-q p {{font-size: 16px !important; color: #1c1917 !important; margin: 0 !important; line-height: 1.45 !important;}}
+.sd-qrow input[type=number] {{border: 1px solid #d6d3d1 !important; border-radius: 10px !important;
+           padding: 10px 12px !important; background: #ffffff !important;}}
+
+/* Last row of the form: the buttons */
+.sd-buttons {{padding-top: 26px !important; border-top: 1px solid #f0eeeb !important; gap: 12px !important;}}
+#check-btn, #clear-btn {{border-radius: 999px !important; min-height: 52px; font-size: 16px !important;}}
+
+.sd-disclaimer p {{text-align: center; color: #57534e !important; font-size: 14px !important;}}
+#lang-switch {{justify-content: flex-end;}}
 
 @media (max-width: 640px) {{
   .sd-title {{font-size: 44px;}}
   .sd-sub {{font-size: 22px;}}
+  .sd-card {{padding: 20px 20px 24px 20px !important;}}
+  .sd-qrow {{gap: 8px !important;}}
 }}
 """
 
@@ -499,47 +524,58 @@ LAUNCH_STYLE = STYLE if GRADIO_MAJOR_VERSION >= 6 else {}
 
 def build_app():
     t = TEXT["en"]
+
+    # The questions in each part of the form (keys into TEXT)
+    sections = [
+        ("sec_about", ["age", "sex", "height", "weight"]),
+        ("sec_medical", ["HighBP", "HighChol", "HeartDiseaseorAttack", "Stroke"]),
+        ("sec_lifestyle", ["GenHlth", "PhysActivity", "DiffWalk", "Smoker"]),
+    ]
+    # Which answer choices each multiple-choice question uses (the rest are number boxes)
+    choice_keys = {"sex": "sex_choices", "GenHlth": "genhlth_choices"}
+    for key in ["HighBP", "HighChol", "HeartDiseaseorAttack", "Stroke", "PhysActivity", "DiffWalk", "Smoker"]:
+        choice_keys[key] = "yes_no"
+    number_keys = ["age", "height", "weight"]
+
+    headings, question_text, answer_boxes = {}, {}, {}
+
     with gr.Blocks(title="Silent Diabetes", **BLOCKS_STYLE) as demo:
-        with gr.Row(equal_height=True):
-            with gr.Column(scale=5):
-                header = gr.HTML(header_html("en"))
-            with gr.Column(scale=1, min_width=160):
-                language = gr.Radio(list(LANGUAGES), value="English", label="Language / اللغة")
-
+        # Language switch in the top corner, then the header
         with gr.Row():
-            # Left side: the questions, in three cards
-            with gr.Column(scale=3, min_width=340):
-                with gr.Group():
-                    sec_about = gr.Markdown(t["sec_about"], elem_classes="sd-section")
-                    with gr.Row():
-                        age = gr.Number(label=t["age"], precision=0)
-                        sex = gr.Radio(t["sex_choices"], label=t["sex"])
-                    with gr.Row():
-                        height = gr.Number(label=t["height"])
-                        weight = gr.Number(label=t["weight"])
-                with gr.Group():
-                    sec_medical = gr.Markdown(t["sec_medical"], elem_classes="sd-section")
-                    high_bp = gr.Radio(t["yes_no"], label=t["HighBP"])
-                    high_chol = gr.Radio(t["yes_no"], label=t["HighChol"])
-                    heart = gr.Radio(t["yes_no"], label=t["HeartDiseaseorAttack"])
-                    stroke = gr.Radio(t["yes_no"], label=t["Stroke"])
-                with gr.Group():
-                    sec_lifestyle = gr.Markdown(t["sec_lifestyle"], elem_classes="sd-section")
-                    gen_hlth = gr.Radio(t["genhlth_choices"], label=t["GenHlth"])
-                    phys_activity = gr.Radio(t["yes_no"], label=t["PhysActivity"])
-                    diff_walk = gr.Radio(t["yes_no"], label=t["DiffWalk"])
-                    smoker = gr.Radio(t["yes_no"], label=t["Smoker"])
+            with gr.Column(scale=4):
+                gr.HTML("")
+            with gr.Column(scale=1, min_width=200):
+                language = gr.Radio(list(LANGUAGES), value="English", show_label=False,
+                                    container=False, elem_id="lang-switch")
+        header = gr.HTML(header_html("en"))
 
-            # Right side: buttons, result and disclaimer
-            with gr.Column(scale=2, min_width=300):
-                check = gr.Button(t["button"], variant="primary", elem_id="check-btn")
-                clear = gr.Button(t["clear"], variant="secondary", elem_id="clear-btn")
-                result = gr.HTML(placeholder("en"))
-                disclaimer = gr.Markdown(t["disclaimer"])  # always visible
+        # The form: one white card, one question per row, 'Check risk' on the last row
+        with gr.Column(elem_classes="sd-card"):
+            for section_key, keys in sections:
+                headings[section_key] = gr.Markdown(t[section_key], elem_classes="sd-section")
+                for key in keys:
+                    with gr.Row(elem_classes="sd-qrow", equal_height=True):
+                        with gr.Column(scale=3, min_width=260):
+                            question_text[key] = gr.Markdown(t[key], elem_classes="sd-q")
+                        with gr.Column(scale=2, min_width=240):
+                            if key in number_keys:
+                                answer_boxes[key] = gr.Number(show_label=False, container=False,
+                                                              precision=0 if key == "age" else None)
+                            else:
+                                answer_boxes[key] = gr.Radio(t[choice_keys[key]], show_label=False,
+                                                             container=False)
+            with gr.Row(elem_classes="sd-buttons"):
+                check = gr.Button(t["button"], variant="primary", elem_id="check-btn", scale=3)
+                clear = gr.Button(t["clear"], variant="secondary", elem_id="clear-btn", scale=1)
+
+        # The result appears under the form
+        result = gr.HTML(placeholder("en"))
+        disclaimer = gr.Markdown(t["disclaimer"], elem_classes="sd-disclaimer")  # always visible
 
         # The order here must match the order of assess()'s arguments
-        question_inputs = [age, sex, height, weight, high_bp, high_chol, phys_activity,
-                           gen_hlth, diff_walk, smoker, heart, stroke]
+        assess_order = ["age", "sex", "height", "weight", "HighBP", "HighChol", "PhysActivity",
+                        "GenHlth", "DiffWalk", "Smoker", "HeartDiseaseorAttack", "Stroke"]
+        question_inputs = [answer_boxes[key] for key in assess_order]
 
         check.click(assess, inputs=[language] + question_inputs, outputs=result)
 
@@ -549,41 +585,27 @@ def build_app():
 
         clear.click(new_customer, inputs=language, outputs=question_inputs + [result])
 
+        # Everything that changes when the language changes, in a fixed order
+        all_question_keys = [key for _, keys in sections for key in keys]
+        choice_question_keys = [key for key in all_question_keys if key in choice_keys]
+        language_outputs = ([header] + [headings[s] for s, _ in sections]
+                            + [question_text[k] for k in all_question_keys]
+                            + [answer_boxes[k] for k in choice_question_keys]
+                            + [check, clear, disclaimer, result])
+
         def switch_language(language_choice):
-            """Relabel every question, choice and heading in the chosen language."""
+            """Rewrite every heading, question and choice in the chosen language
+            (same order as language_outputs above)."""
             lang = LANGUAGES[language_choice]
             tt = TEXT[lang]
-            yes_no_update = lambda key: gr.update(label=tt[key], choices=tt["yes_no"])
-            return [
-                gr.update(value=header_html(lang)),
-                gr.update(value=tt["sec_about"]),
-                gr.update(value=tt["sec_medical"]),
-                gr.update(value=tt["sec_lifestyle"]),
-                gr.update(label=tt["age"]),
-                gr.update(label=tt["sex"], choices=tt["sex_choices"]),
-                gr.update(label=tt["height"]),
-                gr.update(label=tt["weight"]),
-                yes_no_update("HighBP"),
-                yes_no_update("HighChol"),
-                yes_no_update("HeartDiseaseorAttack"),
-                yes_no_update("Stroke"),
-                gr.update(label=tt["GenHlth"], choices=tt["genhlth_choices"]),
-                yes_no_update("PhysActivity"),
-                yes_no_update("DiffWalk"),
-                yes_no_update("Smoker"),
-                gr.update(value=tt["button"]),
-                gr.update(value=tt["clear"]),
-                gr.update(value=tt["disclaimer"]),
-                gr.update(value=placeholder(lang)),   # clear the old result
-            ]
+            return ([gr.update(value=header_html(lang))]
+                    + [gr.update(value=tt[s]) for s, _ in sections]
+                    + [gr.update(value=tt[k]) for k in all_question_keys]
+                    + [gr.update(choices=tt[choice_keys[k]]) for k in choice_question_keys]
+                    + [gr.update(value=tt["button"]), gr.update(value=tt["clear"]),
+                       gr.update(value=tt["disclaimer"]), gr.update(value=placeholder(lang))])
 
-        # The order here must match the list returned by switch_language()
-        language.change(
-            switch_language, inputs=language,
-            outputs=[header, sec_about, sec_medical, sec_lifestyle, age, sex, height, weight,
-                     high_bp, high_chol, heart, stroke, gen_hlth, phys_activity, diff_walk, smoker,
-                     check, clear, disclaimer, result],
-        )
+        language.change(switch_language, inputs=language, outputs=language_outputs)
     return demo
 
 
