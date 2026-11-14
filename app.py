@@ -86,9 +86,11 @@ def predict(answers):
 # ---------------------------------------------------------------------------
 TEXT = {
     "en": {
-        "header_title": "🩺 Silent Diabetes",
-        "header_sub": "A one-minute type 2 diabetes risk check. No blood test needed.",
+        "header_pill": "Diabetes screening · Prototype",
+        "header_title": "Silent Diabetes",
+        "header_sub": "A one-minute type 2 diabetes check. <i>No blood test.</i>",
         "header_tag": "For pharmacists and health-booth volunteers",
+        "header_stats": ["11 simple questions", "Under one minute", "Caught 88% of diabetics in testing"],
         "sec_about": "### 1. About the customer",
         "sec_medical": "### 2. Medical history",
         "sec_lifestyle": "### 3. Health and lifestyle",
@@ -112,6 +114,9 @@ TEXT = {
         "yes_no": [("Yes", 1), ("No", 0)],
         "button": "Check risk",
         "low": "Low risk",
+        "headline_low": "Low risk of type 2 diabetes",
+        "pill_high": "Higher risk",
+        "headline_high": "Please see a doctor for an HbA1c blood test",
         "high": "Higher risk: please see a doctor for an HbA1c blood test",
         "reasons_high": "Main reasons:",
         "reasons_low": "Main reasons the risk is low:",
@@ -157,9 +162,11 @@ TEXT = {
         "health_words": {1: "excellent", 2: "very good", 3: "good", 4: "fair", 5: "poor"},
     },
     "ar": {
-        "header_title": "🩺 السكري الصامت",
-        "header_sub": "فحص سريع لمدة دقيقة لخطر الإصابة بالسكري من النوع الثاني. بدون فحص دم.",
+        "header_pill": "فحص السكري · نموذج أولي",
+        "header_title": "السكري الصامت",
+        "header_sub": "فحص سريع للسكري من النوع الثاني في دقيقة واحدة. <i>بدون فحص دم.</i>",
         "header_tag": "للصيادلة ومتطوعي الأكشاك الصحية",
+        "header_stats": ["11 سؤالاً بسيطاً", "أقل من دقيقة", "اكتشف 88% من مرضى السكري في الاختبار"],
         "sec_about": "### 1. معلومات عن العميل",
         "sec_medical": "### 2. التاريخ الطبي",
         "sec_lifestyle": "### 3. الصحة ونمط الحياة",
@@ -182,6 +189,9 @@ TEXT = {
         "yes_no": [("نعم", 1), ("لا", 0)],
         "button": "تحقّق من الخطر",
         "low": "خطر منخفض",
+        "headline_low": "خطر منخفض للإصابة بالسكري من النوع الثاني",
+        "pill_high": "خطر أعلى",
+        "headline_high": "يُنصح بمراجعة الطبيب لإجراء فحص السكر التراكمي (HbA1c)",
         "high": "خطر أعلى: يُنصح بمراجعة الطبيب لإجراء فحص السكر التراكمي (HbA1c)",
         "reasons_high": "أهم الأسباب:",
         "reasons_low": "أسباب انخفاض الخطر:",
@@ -251,21 +261,27 @@ def reason_words(feature, value, lang):
 # ---------------------------------------------------------------------------
 # Text colours are set on EVERY element (not just the box), because Gradio's dark mode
 # otherwise turns paragraph and list text white, which is unreadable on our light boxes.
-DARK_TEXT = "color:#1e293b !important"
-GREY_TEXT = "color:#475569 !important"
+DARK_TEXT = "color:#1c1917 !important"   # warm near-black
+GREY_TEXT = "color:#57534e !important"   # warm grey
+
+# Fonts: an elegant serif for big headings, a clean sans-serif for everything else
+# (loaded from Google Fonts in the CSS below; the Arabic fonts are used when the text is Arabic)
+TITLE_FONT = "'Instrument Serif', 'Noto Naskh Arabic', Georgia, serif"
+BODY_FONT = "'Inter', 'IBM Plex Sans Arabic', system-ui, sans-serif"
 
 # From the notebook's failure analysis (Section 13), app version on the 50,736 test people:
 TEST_HIGHER_DIABETIC, TEST_HIGHER_TOTAL = 6240, 6240 + 20066   # flagged: diabetic / all flagged
 TEST_LOW_DIABETIC, TEST_LOW_TOTAL = 829, 829 + 23601           # low risk: diabetic / all low risk
 
 
-def card(inner_html, lang, background="#f8fafc", accent="#94a3b8"):
+def card(inner_html, lang, background="#ffffff", accent="#d6d3d1"):
     """A rounded box with a coloured stripe on one side."""
     direction = "rtl" if lang == "ar" else "ltr"
     side = "right" if lang == "ar" else "left"
-    return (f'<div dir="{direction}" style="padding:20px 22px;border-radius:14px;background:{background};'
-            f'border-{side}:8px solid {accent};box-shadow:0 2px 10px rgba(0,0,0,0.08);'
-            f'{DARK_TEXT};font-size:16px;line-height:1.55">{inner_html}</div>')
+    return (f'<div dir="{direction}" style="padding:24px 26px;border-radius:18px;background:{background};'
+            f'border:1px solid #e7e5e4;border-{side}:4px solid {accent};'
+            f'box-shadow:0 1px 2px rgba(0,0,0,0.04),0 8px 24px rgba(0,0,0,0.05);'
+            f'{DARK_TEXT};font-family:{BODY_FONT};font-size:16px;line-height:1.6">{inner_html}</div>')
 
 
 def para(text, style=DARK_TEXT, extra=""):
@@ -292,12 +308,12 @@ def bmi_category(bmi, lang):
     return names[3]
 
 
-def strength_dots(push, colour):
+def strength_dots(push, colour="#1c1917"):
     """3 dots = strong effect, 2 = medium, 1 = small. No numbers, just a visual hint."""
     size = abs(push)
     filled = 3 if size >= 0.5 else (2 if size >= 0.2 else 1)
-    return (f'<span style="color:{colour} !important;letter-spacing:2px">{"●" * filled}</span>'
-            f'<span style="color:#cbd5e1 !important;letter-spacing:2px">{"●" * (3 - filled)}</span>')
+    return (f'<span style="color:#1c1917 !important;letter-spacing:2px">{"●" * filled}</span>'
+            f'<span style="color:#d6d3d1 !important;letter-spacing:2px">{"●" * (3 - filled)}</span>')
 
 
 def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_activity,
@@ -347,7 +363,7 @@ def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_ac
         return f'<ul style="margin:4px 0 10px 0">{items}</ul>'
 
     if higher_risk:
-        background, accent, icon, headline = "#fff7ed", "#ea580c", "🟠", t["high"]
+        background, accent, pill_bg, pill_text, headline = "#ffffff", "#ea580c", "#fff1e6", t["pill_high"], t["headline_high"]
         what = t["what_high"]
         stat = t["stat_high"].format(n=round(100 * TEST_HIGHER_DIABETIC / TEST_HIGHER_TOTAL))
         details = heading(t["reasons_high"]) + reason_list(raising[:3], accent)
@@ -356,7 +372,7 @@ def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_ac
         details += heading(t["next_title"]) + steps_list(t["next_high"])
         details += para(t["high_note"], GREY_TEXT, "font-size:14px")
     else:
-        background, accent, icon, headline = "#f0fdf4", "#16a34a", "🟢", t["low"]
+        background, accent, pill_bg, pill_text, headline = "#ffffff", "#16a34a", "#e9f7ee", t["low"], t["headline_low"]
         what = t["what_low"]
         stat = t["stat_low"].format(n=round(100 * TEST_LOW_DIABETIC / TEST_LOW_TOTAL))
         details = heading(t["reasons_low"]) + reason_list(lowering[:3], accent)
@@ -368,52 +384,115 @@ def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_ac
     bmi_text = t["bmi_line"].format(bmi=bmi, category=bmi_category(bmi, lang))
     disclaimer = DISCLAIMER_EN if lang == "en" else f"{DISCLAIMER_AR}<br>{DISCLAIMER_EN}"
     inner = (
-        f'<div style="font-size:23px;font-weight:800;color:{accent} !important;margin-bottom:6px">'
-        f'{icon} {headline}</div>'
-        f'<span style="display:inline-block;background:white;border:1px solid #e2e8f0;border-radius:999px;'
-        f'padding:3px 12px;font-size:14px;{DARK_TEXT}">{bmi_text}</span>'
+        # coloured status pill (orange / green), then the headline in the serif font
+        f'<span style="display:inline-block;background:{pill_bg};color:{accent} !important;border-radius:999px;'
+        f'padding:4px 14px;font-size:13px;font-weight:600;letter-spacing:0.3px">● {pill_text}</span>'
+        f'<div style="font-family:{TITLE_FONT};font-size:30px;line-height:1.2;{DARK_TEXT};margin:12px 0 10px 0">'
+        f'{headline}</div>'
+        f'<span style="display:inline-block;background:#f5f5f4;border-radius:999px;'
+        f'padding:3px 12px;font-size:13px;{DARK_TEXT}">{bmi_text}</span>'
         + para(what)
         + para(stat, GREY_TEXT, "font-size:14px")
         + details
         + para(t["dots_legend"], GREY_TEXT, "font-size:12px")
-        + f'<hr style="border:none;border-top:1px solid #e2e8f0;margin:10px 0">'
+        + f'<hr style="border:none;border-top:1px solid #e7e5e4;margin:12px 0">'
         + para(f"<i>{disclaimer}</i>", GREY_TEXT, "font-size:13px")
     )
     return card(inner, lang, background, accent)
 
 
 # ---------------------------------------------------------------------------
-# 5. Page header (the coloured banner at the top)
+# 5. Page header and look (black-and-white style)
 # ---------------------------------------------------------------------------
 def header_html(lang):
     t = TEXT[lang]
     direction = "rtl" if lang == "ar" else "ltr"
+    stats = "".join(f'<span class="sd-stat">{s}</span>' for s in t["header_stats"])
     return (f'<div class="sd-header" dir="{direction}">'
+            f'<span class="sd-pill">{t["header_pill"]}</span>'
             f'<div class="sd-title">{t["header_title"]}</div>'
             f'<div class="sd-sub">{t["header_sub"]}</div>'
-            f'<div class="sd-tag">{t["header_tag"]}</div></div>')
+            f'<div class="sd-tag">{t["header_tag"]}</div>'
+            f'<div class="sd-stats">{stats}</div></div>')
 
 
-CSS = """
-.gradio-container {max-width: 1150px !important; margin: auto !important;}
-.sd-header {background: linear-gradient(135deg, #0f766e, #14b8a6); color: white;
-            padding: 26px 30px; border-radius: 18px;}
-.sd-title {font-size: 32px; font-weight: 800;}
-.sd-sub {font-size: 17px; margin-top: 4px; opacity: 0.95;}
-.sd-tag {display: inline-block; margin-top: 12px; padding: 4px 14px; border-radius: 999px;
-         background: rgba(255, 255, 255, 0.2); font-size: 13px;}
-.sd-section {padding: 6px 4px 0 4px;}
-#check-btn {font-size: 18px; min-height: 52px;}
+# Black-and-white, formal look: warm off-white page, near-black text, serif headings,
+# white cards with thin borders, black pill-shaped buttons.
+CSS = f"""
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;600&family=Noto+Naskh+Arabic:wght@400;600&display=swap');
+
+body, .gradio-container {{background: #faf9f7 !important;}}
+.gradio-container {{max-width: 1150px !important; margin: auto !important; font-family: {BODY_FONT} !important;}}
+
+.sd-header {{text-align: center; padding: 34px 16px 26px 16px;}}
+.sd-pill {{display: inline-block; background: #1c1917; color: #ffffff !important; border-radius: 999px;
+           padding: 5px 16px; font-size: 13px; letter-spacing: 0.3px;}}
+.sd-title {{font-family: {TITLE_FONT}; font-size: 64px; line-height: 1.05; margin-top: 16px; color: #1c1917 !important;}}
+.sd-sub {{font-family: {TITLE_FONT}; font-size: 28px; margin-top: 6px; color: #1c1917 !important;}}
+.sd-tag {{font-size: 15px; margin-top: 10px; color: #57534e !important;}}
+.sd-stats {{display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 18px;}}
+.sd-stat {{background: #ffffff; border: 1px solid #e7e5e4; border-radius: 999px; padding: 6px 14px;
+           font-size: 13px; color: #1c1917 !important;}}
+
+.sd-section h3 {{font-family: {TITLE_FONT} !important; font-weight: 400 !important; font-size: 26px !important;
+                 color: #1c1917 !important; margin: 6px 0 2px 0 !important;}}
+#check-btn, #clear-btn {{border-radius: 999px !important; min-height: 50px; font-size: 16px !important;}}
+
+@media (max-width: 640px) {{
+  .sd-title {{font-size: 44px;}}
+  .sd-sub {{font-size: 22px;}}
+}}
 """
+
+# Always show the light (black-on-white) version, even if the computer is in dark mode
+FORCE_LIGHT_JS = """
+() => {
+  const url = new URL(window.location);
+  if (url.searchParams.get('__theme') !== 'light') {
+    url.searchParams.set('__theme', 'light');
+    window.location.href = url.href;
+  }
+}
+"""
+
+
+def make_theme():
+    """A plain black-and-white Gradio theme."""
+    try:
+        return gr.themes.Base(
+            primary_hue="neutral", neutral_hue="stone",
+            font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"],
+        ).set(
+            body_background_fill="#faf9f7",
+            body_text_color="#1c1917",
+            block_background_fill="#ffffff",
+            block_border_color="#e7e5e4",
+            block_radius="16px",
+            block_shadow="0 1px 2px rgba(0,0,0,0.04)",
+            input_background_fill="#ffffff",
+            input_border_color="#d6d3d1",
+            button_primary_background_fill="#1c1917",
+            button_primary_background_fill_hover="#44403c",
+            button_primary_text_color="#ffffff",
+            button_secondary_background_fill="#ffffff",
+            button_secondary_text_color="#1c1917",
+            button_secondary_border_color="#1c1917",
+            checkbox_label_background_fill_selected="#1c1917",
+            checkbox_label_text_color_selected="#ffffff",
+            checkbox_background_color_selected="#1c1917",
+            checkbox_border_color_selected="#1c1917",
+        )
+    except Exception:
+        # If this Gradio version doesn't know one of the settings, fall back to the plain theme
+        return gr.themes.Base(primary_hue="neutral", neutral_hue="stone")
 
 
 # ---------------------------------------------------------------------------
 # 6. Build the page
 # ---------------------------------------------------------------------------
-# Gradio 6 moved the theme and css settings from gr.Blocks() to launch(), so we support both
-THEME = gr.themes.Soft(primary_hue="teal", secondary_hue="orange")
+# Gradio 6 moved the theme, css and js settings from gr.Blocks() to launch(), so we support both
 GRADIO_MAJOR_VERSION = int(gr.__version__.split(".")[0])
-STYLE = {"theme": THEME, "css": CSS}
+STYLE = {"theme": make_theme(), "css": CSS, "js": FORCE_LIGHT_JS}
 BLOCKS_STYLE = STYLE if GRADIO_MAJOR_VERSION < 6 else {}
 LAUNCH_STYLE = STYLE if GRADIO_MAJOR_VERSION >= 6 else {}
 
@@ -454,7 +533,7 @@ def build_app():
             # Right side: buttons, result and disclaimer
             with gr.Column(scale=2, min_width=300):
                 check = gr.Button(t["button"], variant="primary", elem_id="check-btn")
-                clear = gr.Button(t["clear"], variant="secondary")
+                clear = gr.Button(t["clear"], variant="secondary", elem_id="clear-btn")
                 result = gr.HTML(placeholder("en"))
                 disclaimer = gr.Markdown(t["disclaimer"])  # always visible
 
