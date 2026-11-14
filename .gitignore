@@ -1,0 +1,12 @@
+# Never commit the dataset - the notebook downloads it
+*.csv
+data/
+
+# Python / Jupyter clutter
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Mac clutter
+.DS_Store

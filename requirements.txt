@@ -1,0 +1,9 @@
+# Packages used by silent_diabetes.ipynb and app.py
+# (Google Colab already has most of these; the notebook's first cell installs the rest)
+ucimlrepo
+pandas
+numpy
+scikit-learn
+matplotlib
+joblib
+gradio
