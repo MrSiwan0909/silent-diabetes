@@ -86,10 +86,16 @@ def predict(answers):
 # ---------------------------------------------------------------------------
 TEXT = {
     "en": {
-        "title": "# Silent Diabetes",
-        "intro": ("A one-minute check of type 2 diabetes risk, **without a blood test**. "
-                  "Ask the customer each question below, then press **Check risk**."),
-        "age": "How old are you? (years)",
+        "header_title": "🩺 Silent Diabetes",
+        "header_sub": "A one-minute type 2 diabetes risk check. No blood test needed.",
+        "header_tag": "For pharmacists and health-booth volunteers",
+        "sec_about": "### 1. About the customer",
+        "sec_medical": "### 2. Medical history",
+        "sec_lifestyle": "### 3. Health and lifestyle",
+        "placeholder": ("📝 Ask the customer each question, then press <b>Check risk</b>. "
+                        "The result will appear here."),
+        "clear": "New customer",
+        "age": "How old are you? (years, 18 or older)",
         "sex": "Sex",
         "sex_choices": [("Female", 0), ("Male", 1)],
         "height": "Height (cm)",
@@ -137,10 +143,15 @@ TEXT = {
         "health_words": {1: "excellent", 2: "very good", 3: "good", 4: "fair", 5: "poor"},
     },
     "ar": {
-        "title": "# السكري الصامت",
-        "intro": ("فحص سريع لمدة دقيقة لخطر الإصابة بالسكري من النوع الثاني، **بدون فحص دم**. "
-                  "اطرح كل سؤال على العميل ثم اضغط **تحقّق من الخطر**."),
-        "age": "كم عمرك؟ (بالسنوات)",
+        "header_title": "🩺 السكري الصامت",
+        "header_sub": "فحص سريع لمدة دقيقة لخطر الإصابة بالسكري من النوع الثاني. بدون فحص دم.",
+        "header_tag": "للصيادلة ومتطوعي الأكشاك الصحية",
+        "sec_about": "### 1. معلومات عن العميل",
+        "sec_medical": "### 2. التاريخ الطبي",
+        "sec_lifestyle": "### 3. الصحة ونمط الحياة",
+        "placeholder": "📝 اطرح كل سؤال على العميل ثم اضغط <b>تحقّق من الخطر</b>. ستظهر النتيجة هنا.",
+        "clear": "عميل جديد",
+        "age": "كم عمرك؟ (بالسنوات، 18 فأكثر)",
         "sex": "الجنس",
         "sex_choices": [("أنثى", 0), ("ذكر", 1)],
         "height": "الطول (سم)",
@@ -210,10 +221,21 @@ def reason_words(feature, value, lang):
 # ---------------------------------------------------------------------------
 # 4. What happens when the pharmacist presses "Check risk"
 # ---------------------------------------------------------------------------
-def message_box(text, lang):
+def card(inner_html, lang, background="#f8fafc", accent="#94a3b8"):
+    """A rounded box with a coloured stripe on one side. Dark text so it's readable in light and dark mode."""
     direction = "rtl" if lang == "ar" else "ltr"
-    return (f'<div dir="{direction}" style="padding:14px;border-radius:10px;background:#f1f3f4;'
-            f'color:#1a1a1a;font-size:16px">{text}</div>')
+    side = "right" if lang == "ar" else "left"
+    return (f'<div dir="{direction}" style="padding:20px 22px;border-radius:14px;background:{background};'
+            f'border-{side}:8px solid {accent};box-shadow:0 2px 10px rgba(0,0,0,0.08);'
+            f'color:#1e293b;font-size:16px;line-height:1.5">{inner_html}</div>')
+
+
+def message_box(text, lang):
+    return card(text, lang)
+
+
+def placeholder(lang):
+    return card(TEXT[lang]["placeholder"], lang)
 
 
 def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_activity,
@@ -225,15 +247,15 @@ def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_ac
     inputs = [age, sex, height_cm, weight_kg, high_bp, high_chol, phys_activity,
               gen_hlth, diff_walk, smoker, heart, stroke]
     if any(value is None for value in inputs):
-        return message_box(t["missing"], lang)
+        return message_box("⚠️ " + t["missing"], lang)
 
     # Check the numbers are realistic (catches typing mistakes like the BMI of 90 in our failure analysis)
     if not (MIN_AGE <= age <= MAX_AGE):
-        return message_box(t["bad_age"], lang)
+        return message_box("⚠️ " + t["bad_age"], lang)
     bmi = weight_kg / (height_cm / 100) ** 2
     if not (MIN_HEIGHT_CM <= height_cm <= MAX_HEIGHT_CM and MIN_WEIGHT_KG <= weight_kg <= MAX_WEIGHT_KG
             and MIN_BMI <= bmi <= MAX_BMI):
-        return message_box(t["bad_body"], lang)
+        return message_box("⚠️ " + t["bad_body"], lang)
 
     answers = {
         "Age": age_to_code(age), "Sex": int(sex), "BMI": bmi,
@@ -249,92 +271,163 @@ def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_ac
     lowering = [f for f in sorted(pushes, key=pushes.get) if pushes[f] < -min_push]
 
     def bullet_list(features):
-        return "".join(f"<li>{reason_words(f, answers[f], lang)}</li>" for f in features)
+        items = "".join(f'<li style="margin:4px 0">{reason_words(f, answers[f], lang)}</li>' for f in features)
+        return f'<ul style="margin:6px 0 12px 0">{items}</ul>'
 
     if higher_risk:
-        colour, border, headline = "#fff4e5", "#e8710a", t["high"]
-        details = f"<b>{t['reasons_high']}</b><ul>{bullet_list(raising[:3])}</ul><p>{t['high_note']}</p>"
+        background, accent, icon, headline = "#fff7ed", "#ea580c", "🟠", t["high"]
+        details = f"<b>{t['reasons_high']}</b>{bullet_list(raising[:3])}<p>{t['high_note']}</p>"
     else:
-        colour, border, headline = "#e6f4ea", "#1e8e3e", t["low"]
-        details = f"<b>{t['reasons_low']}</b><ul>{bullet_list(lowering[:3])}</ul>"
+        background, accent, icon, headline = "#f0fdf4", "#16a34a", "🟢", t["low"]
+        details = f"<b>{t['reasons_low']}</b>{bullet_list(lowering[:3])}"
         if raising:
-            details += f"<b>{t['watch']}</b><ul>{bullet_list(raising[:2])}</ul>"
+            details += f"<b>{t['watch']}</b>{bullet_list(raising[:2])}"
         details += f"<p>{t['low_note']}</p>"
 
-    direction = "rtl" if lang == "ar" else "ltr"
     disclaimer = DISCLAIMER_EN if lang == "en" else f"{DISCLAIMER_AR}<br>{DISCLAIMER_EN}"
-    return (
-        f'<div dir="{direction}" style="padding:18px;border-radius:12px;background:{colour};'
-        f'border:3px solid {border};color:#1a1a1a;font-size:16px">'
-        f'<div style="font-size:24px;font-weight:bold;color:{border};margin-bottom:8px">{headline}</div>'
-        f'<p>{t["bmi_line"].format(bmi=bmi)}</p>{details}'
-        f'<p style="font-size:13px;color:#444"><i>{disclaimer}</i></p></div>'
+    inner = (
+        f'<div style="font-size:24px;font-weight:800;color:{accent};margin-bottom:6px">{icon} {headline}</div>'
+        f'<div style="display:inline-block;background:white;border-radius:999px;padding:3px 12px;'
+        f'font-size:14px;margin-bottom:12px">{t["bmi_line"].format(bmi=bmi)}</div>'
+        f'{details}'
+        f'<p style="font-size:13px;color:#475569;margin-bottom:0"><i>{disclaimer}</i></p>'
     )
+    return card(inner, lang, background, accent)
 
 
 # ---------------------------------------------------------------------------
-# 5. Switching language: relabel every question and choice
+# 5. Page header (the coloured banner at the top)
 # ---------------------------------------------------------------------------
-def switch_language(language):
-    t = TEXT[LANGUAGES[language]]
-    updates = [
-        gr.update(value=t["title"]),
-        gr.update(value=t["intro"]),
-        gr.update(label=t["age"]),
-        gr.update(label=t["sex"], choices=t["sex_choices"]),
-        gr.update(label=t["height"]),
-        gr.update(label=t["weight"]),
-    ]
-    for question in ["HighBP", "HighChol", "PhysActivity"]:
-        updates.append(gr.update(label=t[question], choices=t["yes_no"]))
-    updates.append(gr.update(label=t["GenHlth"], choices=t["genhlth_choices"]))
-    for question in ["DiffWalk", "Smoker", "HeartDiseaseorAttack", "Stroke"]:
-        updates.append(gr.update(label=t[question], choices=t["yes_no"]))
-    updates.append(gr.update(value=t["button"]))
-    updates.append(gr.update(value=t["disclaimer"]))
-    updates.append(gr.update(value=""))  # clear the old result
-    return updates
+def header_html(lang):
+    t = TEXT[lang]
+    direction = "rtl" if lang == "ar" else "ltr"
+    return (f'<div class="sd-header" dir="{direction}">'
+            f'<div class="sd-title">{t["header_title"]}</div>'
+            f'<div class="sd-sub">{t["header_sub"]}</div>'
+            f'<div class="sd-tag">{t["header_tag"]}</div></div>')
+
+
+CSS = """
+.gradio-container {max-width: 1150px !important; margin: auto !important;}
+.sd-header {background: linear-gradient(135deg, #0f766e, #14b8a6); color: white;
+            padding: 26px 30px; border-radius: 18px;}
+.sd-title {font-size: 32px; font-weight: 800;}
+.sd-sub {font-size: 17px; margin-top: 4px; opacity: 0.95;}
+.sd-tag {display: inline-block; margin-top: 12px; padding: 4px 14px; border-radius: 999px;
+         background: rgba(255, 255, 255, 0.2); font-size: 13px;}
+.sd-section {padding: 6px 4px 0 4px;}
+#check-btn {font-size: 18px; min-height: 52px;}
+"""
 
 
 # ---------------------------------------------------------------------------
 # 6. Build the page
 # ---------------------------------------------------------------------------
+# Gradio 6 moved the theme and css settings from gr.Blocks() to launch(), so we support both
+THEME = gr.themes.Soft(primary_hue="teal", secondary_hue="orange")
+GRADIO_MAJOR_VERSION = int(gr.__version__.split(".")[0])
+STYLE = {"theme": THEME, "css": CSS}
+BLOCKS_STYLE = STYLE if GRADIO_MAJOR_VERSION < 6 else {}
+LAUNCH_STYLE = STYLE if GRADIO_MAJOR_VERSION >= 6 else {}
+
+
 def build_app():
     t = TEXT["en"]
-    with gr.Blocks(title="Silent Diabetes") as demo:
-        language = gr.Radio(list(LANGUAGES), value="English", label="Language / اللغة")
-        title = gr.Markdown(t["title"])
-        intro = gr.Markdown(t["intro"])
+    with gr.Blocks(title="Silent Diabetes", **BLOCKS_STYLE) as demo:
+        with gr.Row(equal_height=True):
+            with gr.Column(scale=5):
+                header = gr.HTML(header_html("en"))
+            with gr.Column(scale=1, min_width=160):
+                language = gr.Radio(list(LANGUAGES), value="English", label="Language / اللغة")
 
         with gr.Row():
-            age = gr.Number(label=t["age"], precision=0)
-            sex = gr.Radio(t["sex_choices"], label=t["sex"])
-        with gr.Row():
-            height = gr.Number(label=t["height"])
-            weight = gr.Number(label=t["weight"])
+            # Left side: the questions, in three cards
+            with gr.Column(scale=3, min_width=340):
+                with gr.Group():
+                    sec_about = gr.Markdown(t["sec_about"], elem_classes="sd-section")
+                    with gr.Row():
+                        age = gr.Number(label=t["age"], precision=0)
+                        sex = gr.Radio(t["sex_choices"], label=t["sex"])
+                    with gr.Row():
+                        height = gr.Number(label=t["height"])
+                        weight = gr.Number(label=t["weight"])
+                with gr.Group():
+                    sec_medical = gr.Markdown(t["sec_medical"], elem_classes="sd-section")
+                    high_bp = gr.Radio(t["yes_no"], label=t["HighBP"])
+                    high_chol = gr.Radio(t["yes_no"], label=t["HighChol"])
+                    heart = gr.Radio(t["yes_no"], label=t["HeartDiseaseorAttack"])
+                    stroke = gr.Radio(t["yes_no"], label=t["Stroke"])
+                with gr.Group():
+                    sec_lifestyle = gr.Markdown(t["sec_lifestyle"], elem_classes="sd-section")
+                    gen_hlth = gr.Radio(t["genhlth_choices"], label=t["GenHlth"])
+                    phys_activity = gr.Radio(t["yes_no"], label=t["PhysActivity"])
+                    diff_walk = gr.Radio(t["yes_no"], label=t["DiffWalk"])
+                    smoker = gr.Radio(t["yes_no"], label=t["Smoker"])
 
-        high_bp = gr.Radio(t["yes_no"], label=t["HighBP"])
-        high_chol = gr.Radio(t["yes_no"], label=t["HighChol"])
-        phys_activity = gr.Radio(t["yes_no"], label=t["PhysActivity"])
-        gen_hlth = gr.Radio(t["genhlth_choices"], label=t["GenHlth"])
-        diff_walk = gr.Radio(t["yes_no"], label=t["DiffWalk"])
-        smoker = gr.Radio(t["yes_no"], label=t["Smoker"])
-        heart = gr.Radio(t["yes_no"], label=t["HeartDiseaseorAttack"])
-        stroke = gr.Radio(t["yes_no"], label=t["Stroke"])
+            # Right side: buttons, result and disclaimer
+            with gr.Column(scale=2, min_width=300):
+                check = gr.Button(t["button"], variant="primary", elem_id="check-btn")
+                clear = gr.Button(t["clear"], variant="secondary")
+                result = gr.HTML(placeholder("en"))
+                disclaimer = gr.Markdown(t["disclaimer"])  # always visible
 
-        check = gr.Button(t["button"], variant="primary")
-        result = gr.HTML()
-        disclaimer = gr.Markdown(t["disclaimer"])  # always visible at the bottom
-
+        # The order here must match the order of assess()'s arguments
         question_inputs = [age, sex, height, weight, high_bp, high_chol, phys_activity,
                            gen_hlth, diff_walk, smoker, heart, stroke]
+
         check.click(assess, inputs=[language] + question_inputs, outputs=result)
-        language.change(switch_language, inputs=language,
-                        outputs=[title, intro] + question_inputs + [check, disclaimer, result])
+
+        def new_customer(language_choice):
+            """Empty every answer and show the placeholder again."""
+            return [gr.update(value=None) for _ in question_inputs] + [placeholder(LANGUAGES[language_choice])]
+
+        clear.click(new_customer, inputs=language, outputs=question_inputs + [result])
+
+        def switch_language(language_choice):
+            """Relabel every question, choice and heading in the chosen language."""
+            lang = LANGUAGES[language_choice]
+            tt = TEXT[lang]
+            yes_no_update = lambda key: gr.update(label=tt[key], choices=tt["yes_no"])
+            return [
+                gr.update(value=header_html(lang)),
+                gr.update(value=tt["sec_about"]),
+                gr.update(value=tt["sec_medical"]),
+                gr.update(value=tt["sec_lifestyle"]),
+                gr.update(label=tt["age"]),
+                gr.update(label=tt["sex"], choices=tt["sex_choices"]),
+                gr.update(label=tt["height"]),
+                gr.update(label=tt["weight"]),
+                yes_no_update("HighBP"),
+                yes_no_update("HighChol"),
+                yes_no_update("HeartDiseaseorAttack"),
+                yes_no_update("Stroke"),
+                gr.update(label=tt["GenHlth"], choices=tt["genhlth_choices"]),
+                yes_no_update("PhysActivity"),
+                yes_no_update("DiffWalk"),
+                yes_no_update("Smoker"),
+                gr.update(value=tt["button"]),
+                gr.update(value=tt["clear"]),
+                gr.update(value=tt["disclaimer"]),
+                gr.update(value=placeholder(lang)),   # clear the old result
+            ]
+
+        # The order here must match the list returned by switch_language()
+        language.change(
+            switch_language, inputs=language,
+            outputs=[header, sec_about, sec_medical, sec_lifestyle, age, sex, height, weight,
+                     high_bp, high_chol, heart, stroke, gen_hlth, phys_activity, diff_walk, smoker,
+                     check, clear, disclaimer, result],
+        )
     return demo
 
 
 demo = build_app()
 
+
+def launch(**kwargs):
+    """Start the app, e.g. launch(share=True) in Colab for a public link."""
+    return demo.launch(**LAUNCH_STYLE, **kwargs)
+
+
 if __name__ == "__main__":
-    demo.launch()
+    launch()
