@@ -36,6 +36,8 @@ Beyond training a model, we added:
 4. **A fairness check by sex and age:** we found the model missed about half of diabetics under 40, tried one fix (age-group thresholds), measured its cost, and used it in the app.
 5. **Honesty checks:** a prediabetes label check (the dataset's documentation is wrong about it), an overfitting and leakage check, a check on test people whose answers never appeared in training, and a failure analysis of real mistakes.
 6. **An explainable app:** every result shows the exact reasons behind it.
+7. **Extra analyses added after the main results** (all choices made on the validation set, test set reported once):
+   - **"Is it the AI, or just more questions?"** We trained the same model on only the ADA's 5 questions to separate the gain from better weights and the gain from extra questions.
 
 ## How it works
 
@@ -110,6 +112,22 @@ By sex the gap was small (recall: women 83.7%, men 86.3%). **By age there was a 
   - False alarm: a woman aged 75-79 with a recorded BMI of 90 (likely a data error), which is why the app checks inputs.
   - False alarm: a woman aged 55-59 with high blood pressure and high cholesterol. She could be prediabetic or undiagnosed, which the survey can't tell.
 - **Overall:** missed diabetics look healthy, and false alarms look like diabetics. Questions can narrow down who needs a blood test, but they can't replace it.
+
+### 5. Extra analyses (added after the main results)
+
+All thresholds were chosen on the validation set, then the test set was reported once.
+
+**Is it the AI, or just more questions?** Test set, at the same workload as the ADA checklist (about 47.5% flagged):
+
+| Method | ROC-AUC | Diabetics missed | False alarms |
+|---|---|---|---|
+| ADA score (5 questions, expert points) | 0.757 | 1,331 | 18,450 |
+| Logistic regression, same 5 questions | 0.774 | 1,209 | 18,308 |
+| Logistic regression, all 11 questions | 0.815 | 895 | 17,880 |
+
+- **About 28% of the improvement comes from better weights** (learned from data instead of expert points), and **about 72% from the 6 extra questions.**
+- At the same recall as the ADA (about 81%), the 5-question model flags 45.0% of people and the 11-question model 38.9%, vs 47.7% for ADA.
+- The learned weights suggest high blood pressure deserves about as much weight as age and BMI, while the ADA checklist gives it less.
 
 ## What we'd do next
 
