@@ -120,7 +120,21 @@ TEXT = {
                      "or passing urine often, see a doctor anyway. This check can't ask about everything."),
         "high_note": ("This is not a diagnosis. Many people flagged by this check do not have diabetes. "
                       "The HbA1c blood test will give the real answer."),
-        "bmi_line": "Calculated BMI: {bmi:.1f}",
+        "bmi_line": "BMI {bmi:.1f} · {category}",
+        "bmi_categories": ["underweight", "healthy weight", "overweight", "obese"],
+        "what_high": ("These answers look similar to people who have type 2 diabetes. "
+                      "Only a blood test can say for sure."),
+        "what_low": "These answers look similar to people who usually don't have type 2 diabetes.",
+        "stat_high": "In our test data, about {n} in 100 people with this result had diabetes.",
+        "stat_low": "In our test data, about {n} in 100 people with this result had diabetes.",
+        "in_favour": "Things in your favour:",
+        "dots_legend": "Dots show how strongly each answer affects the result.",
+        "next_title": "Next steps",
+        "next_high": ["Book an HbA1c blood test with a doctor or clinic, ideally in the next few weeks.",
+                      "It's a simple blood test, and you usually don't need to fast for it.",
+                      "Show this result to the doctor."],
+        "next_low": ["Based on these answers, no blood test is needed right now.",
+                     "Check again in about a year, or sooner if your health changes."],
         "missing": "Please answer all the questions.",
         "bad_age": f"Age must be between {MIN_AGE} and {MAX_AGE} years.",
         "bad_body": (f"Please check height ({MIN_HEIGHT_CM}-{MAX_HEIGHT_CM} cm) and weight "
@@ -176,7 +190,21 @@ TEXT = {
                      "أو كثرة التبول، فراجع الطبيب على أي حال. هذا الفحص لا يسأل عن كل شيء."),
         "high_note": ("هذا ليس تشخيصاً. كثير ممن يظهر لديهم خطر أعلى في هذا الفحص ليسوا مصابين بالسكري. "
                       "فحص السكر التراكمي (HbA1c) يعطي الإجابة الحقيقية."),
-        "bmi_line": "مؤشر كتلة الجسم المحسوب: {bmi:.1f}",
+        "bmi_line": "مؤشر كتلة الجسم {bmi:.1f} · {category}",
+        "bmi_categories": ["نقص في الوزن", "وزن صحي", "زيادة في الوزن", "سمنة"],
+        "what_high": ("هذه الإجابات تشبه إجابات أشخاص مصابين بالسكري من النوع الثاني. "
+                      "فحص الدم وحده يمكنه التأكد."),
+        "what_low": "هذه الإجابات تشبه إجابات أشخاص لا يعانون عادةً من السكري من النوع الثاني.",
+        "stat_high": "في بيانات الاختبار لدينا، كان حوالي {n} من كل 100 شخص حصلوا على هذه النتيجة مصابين بالسكري.",
+        "stat_low": "في بيانات الاختبار لدينا، كان حوالي {n} من كل 100 شخص حصلوا على هذه النتيجة مصابين بالسكري.",
+        "in_favour": "عوامل في صالحك:",
+        "dots_legend": "تُظهر النقاط مدى تأثير كل إجابة على النتيجة.",
+        "next_title": "الخطوات التالية",
+        "next_high": ["احجز فحص السكر التراكمي (HbA1c) لدى طبيب أو عيادة، ويُفضَّل خلال الأسابيع القليلة القادمة.",
+                      "إنه فحص دم بسيط، وعادةً لا يحتاج إلى صيام.",
+                      "اعرض هذه النتيجة على الطبيب."],
+        "next_low": ["بناءً على هذه الإجابات، لا حاجة لفحص دم حالياً.",
+                     "أعد الفحص بعد سنة تقريباً، أو قبل ذلك إذا تغيّرت حالتك الصحية."],
         "missing": "يرجى الإجابة عن جميع الأسئلة.",
         "bad_age": f"يجب أن يكون العمر بين {MIN_AGE} و{MAX_AGE} سنة.",
         "bad_body": (f"يرجى التحقق من الطول ({MIN_HEIGHT_CM}-{MAX_HEIGHT_CM} سم) والوزن "
@@ -221,21 +249,55 @@ def reason_words(feature, value, lang):
 # ---------------------------------------------------------------------------
 # 4. What happens when the pharmacist presses "Check risk"
 # ---------------------------------------------------------------------------
+# Text colours are set on EVERY element (not just the box), because Gradio's dark mode
+# otherwise turns paragraph and list text white, which is unreadable on our light boxes.
+DARK_TEXT = "color:#1e293b !important"
+GREY_TEXT = "color:#475569 !important"
+
+# From the notebook's failure analysis (Section 13), app version on the 50,736 test people:
+TEST_HIGHER_DIABETIC, TEST_HIGHER_TOTAL = 6240, 6240 + 20066   # flagged: diabetic / all flagged
+TEST_LOW_DIABETIC, TEST_LOW_TOTAL = 829, 829 + 23601           # low risk: diabetic / all low risk
+
+
 def card(inner_html, lang, background="#f8fafc", accent="#94a3b8"):
-    """A rounded box with a coloured stripe on one side. Dark text so it's readable in light and dark mode."""
+    """A rounded box with a coloured stripe on one side."""
     direction = "rtl" if lang == "ar" else "ltr"
     side = "right" if lang == "ar" else "left"
     return (f'<div dir="{direction}" style="padding:20px 22px;border-radius:14px;background:{background};'
             f'border-{side}:8px solid {accent};box-shadow:0 2px 10px rgba(0,0,0,0.08);'
-            f'color:#1e293b;font-size:16px;line-height:1.5">{inner_html}</div>')
+            f'{DARK_TEXT};font-size:16px;line-height:1.55">{inner_html}</div>')
+
+
+def para(text, style=DARK_TEXT, extra=""):
+    return f'<p style="{style};margin:6px 0;{extra}">{text}</p>'
 
 
 def message_box(text, lang):
-    return card(text, lang)
+    return card(para(text), lang)
 
 
 def placeholder(lang):
-    return card(TEXT[lang]["placeholder"], lang)
+    return card(para(TEXT[lang]["placeholder"]), lang)
+
+
+def bmi_category(bmi, lang):
+    """WHO adult categories: under 18.5, 18.5-24.9, 25-29.9, 30 and over."""
+    names = TEXT[lang]["bmi_categories"]
+    if bmi < 18.5:
+        return names[0]
+    if bmi < 25:
+        return names[1]
+    if bmi < 30:
+        return names[2]
+    return names[3]
+
+
+def strength_dots(push, colour):
+    """3 dots = strong effect, 2 = medium, 1 = small. No numbers, just a visual hint."""
+    size = abs(push)
+    filled = 3 if size >= 0.5 else (2 if size >= 0.2 else 1)
+    return (f'<span style="color:{colour} !important;letter-spacing:2px">{"●" * filled}</span>'
+            f'<span style="color:#cbd5e1 !important;letter-spacing:2px">{"●" * (3 - filled)}</span>')
 
 
 def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_activity,
@@ -270,27 +332,52 @@ def assess(language, age, sex, height_cm, weight_kg, high_bp, high_chol, phys_ac
     raising = [f for f in sorted(pushes, key=pushes.get, reverse=True) if pushes[f] > min_push]
     lowering = [f for f in sorted(pushes, key=pushes.get) if pushes[f] < -min_push]
 
-    def bullet_list(features):
-        items = "".join(f'<li style="margin:4px 0">{reason_words(f, answers[f], lang)}</li>' for f in features)
-        return f'<ul style="margin:6px 0 12px 0">{items}</ul>'
+    def reason_list(features, colour):
+        items = "".join(
+            f'<li style="{DARK_TEXT};margin:5px 0;list-style:none">'
+            f'{strength_dots(pushes[f], colour)}&nbsp;&nbsp;{reason_words(f, answers[f], lang)}</li>'
+            for f in features)
+        return f'<ul style="margin:4px 0 10px 0;padding:0">{items}</ul>'
+
+    def heading(text):
+        return f'<div style="{DARK_TEXT};font-weight:700;margin-top:12px">{text}</div>'
+
+    def steps_list(steps):
+        items = "".join(f'<li style="{DARK_TEXT};margin:3px 0">{s}</li>' for s in steps)
+        return f'<ul style="margin:4px 0 10px 0">{items}</ul>'
 
     if higher_risk:
         background, accent, icon, headline = "#fff7ed", "#ea580c", "🟠", t["high"]
-        details = f"<b>{t['reasons_high']}</b>{bullet_list(raising[:3])}<p>{t['high_note']}</p>"
+        what = t["what_high"]
+        stat = t["stat_high"].format(n=round(100 * TEST_HIGHER_DIABETIC / TEST_HIGHER_TOTAL))
+        details = heading(t["reasons_high"]) + reason_list(raising[:3], accent)
+        if lowering:
+            details += heading(t["in_favour"]) + reason_list(lowering[:2], "#16a34a")
+        details += heading(t["next_title"]) + steps_list(t["next_high"])
+        details += para(t["high_note"], GREY_TEXT, "font-size:14px")
     else:
         background, accent, icon, headline = "#f0fdf4", "#16a34a", "🟢", t["low"]
-        details = f"<b>{t['reasons_low']}</b>{bullet_list(lowering[:3])}"
+        what = t["what_low"]
+        stat = t["stat_low"].format(n=round(100 * TEST_LOW_DIABETIC / TEST_LOW_TOTAL))
+        details = heading(t["reasons_low"]) + reason_list(lowering[:3], accent)
         if raising:
-            details += f"<b>{t['watch']}</b>{bullet_list(raising[:2])}"
-        details += f"<p>{t['low_note']}</p>"
+            details += heading(t["watch"]) + reason_list(raising[:2], "#ea580c")
+        details += heading(t["next_title"]) + steps_list(t["next_low"])
+        details += para(t["low_note"], GREY_TEXT, "font-size:14px")
 
+    bmi_text = t["bmi_line"].format(bmi=bmi, category=bmi_category(bmi, lang))
     disclaimer = DISCLAIMER_EN if lang == "en" else f"{DISCLAIMER_AR}<br>{DISCLAIMER_EN}"
     inner = (
-        f'<div style="font-size:24px;font-weight:800;color:{accent};margin-bottom:6px">{icon} {headline}</div>'
-        f'<div style="display:inline-block;background:white;border-radius:999px;padding:3px 12px;'
-        f'font-size:14px;margin-bottom:12px">{t["bmi_line"].format(bmi=bmi)}</div>'
-        f'{details}'
-        f'<p style="font-size:13px;color:#475569;margin-bottom:0"><i>{disclaimer}</i></p>'
+        f'<div style="font-size:23px;font-weight:800;color:{accent} !important;margin-bottom:6px">'
+        f'{icon} {headline}</div>'
+        f'<span style="display:inline-block;background:white;border:1px solid #e2e8f0;border-radius:999px;'
+        f'padding:3px 12px;font-size:14px;{DARK_TEXT}">{bmi_text}</span>'
+        + para(what)
+        + para(stat, GREY_TEXT, "font-size:14px")
+        + details
+        + para(t["dots_legend"], GREY_TEXT, "font-size:12px")
+        + f'<hr style="border:none;border-top:1px solid #e2e8f0;margin:10px 0">'
+        + para(f"<i>{disclaimer}</i>", GREY_TEXT, "font-size:13px")
     )
     return card(inner, lang, background, accent)
 
