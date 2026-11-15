@@ -10,3 +10,7 @@ venv/
 
 # Mac clutter
 .DS_Store
+
+# Private submission files (contain team emails) - never upload to GitHub
+*.pdf
+*.docx
