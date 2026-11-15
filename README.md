@@ -2,7 +2,7 @@
 
 **Track:** Health
 
-**Team:** Siwan Ahn and Shrey Rupareliya
+**Team:** Siwan Ahn and Shrey Rupareliya (GEMS World Academy)
 
 > **This project is a prototype and is not medical advice.**
 
