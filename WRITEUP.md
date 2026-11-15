@@ -57,4 +57,4 @@ Main limitation: the data is self-reported, from **US adults in 2015, not UAE re
 - WHO Expert Consultation, Asian BMI cut-offs, *The Lancet* 2004: https://doi.org/10.1016/S0140-6736(03)15268-3
 - Libraries: scikit-learn, pandas, NumPy, matplotlib, Gradio, ucimlrepo
 - AI tool used: Claude Code (Anthropic), for planning, code, explanations and drafting text. All results come from our own notebook runs.
-- Full list: [Sources in README.md](README.md#sources)
+- Full list: [Sources in DETAILS.md](DETAILS.md#sources)
