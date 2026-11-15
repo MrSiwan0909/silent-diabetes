@@ -451,6 +451,10 @@ body, .gradio-container {{background: #faf9f7 !important;}}
 .sd-qrow {{padding: 14px 0 !important; border-top: 1px solid #f0eeeb !important; align-items: center !important;
            gap: 20px !important;}}
 .sd-q p {{font-size: 16px !important; color: #1c1917 !important; margin: 0 !important; line-height: 1.45 !important;}}
+/* Stop the first letter of each line being cut off: give the text a little room and let it show fully */
+.sd-q, .sd-q *, .sd-section, .sd-section * {{overflow: visible !important;}}
+.sd-q .prose, .sd-q p, .sd-section .prose, .sd-section h3 {{padding-left: 6px !important; padding-right: 4px !important;
+           font-style: normal !important;}}
 .sd-qrow input[type=number] {{border: 1px solid #d6d3d1 !important; border-radius: 10px !important;
            padding: 10px 12px !important; background: #ffffff !important;}}
 
