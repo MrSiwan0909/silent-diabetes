@@ -2,11 +2,12 @@
 
 **Track:** Health
 
-**Team:** (Siwan Ahn and Shrey Rupareliya)
+**Team:** Siwan Ahn and Shrey Rupareliya
 
 > **This project is a prototype and is not medical advice.**
 
 **Links**
+- One-page write-up: [WRITEUP.md](WRITEUP.md)
 - Notebook (opens in Google Colab): https://colab.research.google.com/github/MrSiwan0909/silent-diabetes/blob/main/silent_diabetes.ipynb
 - Notebook on GitHub (with all outputs): [silent_diabetes.ipynb](silent_diabetes.ipynb)
 - App code: [app.py](app.py) · Model numbers: [model.json](model.json)
