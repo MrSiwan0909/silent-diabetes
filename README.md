@@ -38,6 +38,7 @@ Beyond training a model, we added:
 6. **An explainable app:** every result shows the exact reasons behind it.
 7. **Extra analyses added after the main results** (all choices made on the validation set, test set reported once):
    - **"Is it the AI, or just more questions?"** We trained the same model on only the ADA's 5 questions to separate the gain from better weights and the gain from extra questions.
+   - **A UAE stress test (simulation):** we simulated a population where diabetics have a lower BMI (as is common in South Asian populations), measured how much the app's recall drops, and tested a simple BMI adjustment.
 
 ## How it works
 
@@ -128,6 +129,17 @@ All thresholds were chosen on the validation set, then the test set was reported
 - **About 28% of the improvement comes from better weights** (learned from data instead of expert points), and **about 72% from the 6 extra questions.**
 - At the same recall as the ADA (about 81%), the 5-question model flags 45.0% of people and the 11-question model 38.9%, vs 47.7% for ADA.
 - The learned weights suggest high blood pressure deserves about as much weight as age and BMI, while the ADA checklist gives it less.
+
+**UAE stress test (a simulation, not real UAE data).** People of Asian origin tend to develop type 2 diabetes at a lower BMI (a WHO expert consultation suggested BMI action points of about 23 and 27.5 for Asian populations, instead of 25 and 30). We lowered every test diabetic's BMI by 2.5 and ran the app version:
+
+| Test set | Recall | Diabetics missed | False alarms | % flagged |
+|---|---|---|---|---|
+| Normal data (app as it is) | 88.3% | 829 | 20,066 | 51.8% |
+| Simulated leaner diabetics, no fix | 84.0% | 1,129 | 20,066 | 51.3% |
+| Simulated, with fix (+2.5 BMI for South/East Asian customers) | 88.3% | 829 | 22,674 | 57.0% |
+
+- If UAE diabetics are leaner, the app could **miss 300 more diabetics**. A BMI adjustment (chosen on validation) recovers them, but costs **2,608 extra false alarms**.
+- Because we built the 2.5 gap ourselves, the fix is almost guaranteed to work in the simulation. This shows the size of the risk, not the right adjustment. **Only real UAE data with blood tests can measure it.** The app was not changed.
 
 ## What we'd do next
 
