@@ -39,6 +39,7 @@ Beyond training a model, we added:
 7. **Extra analyses added after the main results** (all choices made on the validation set, test set reported once):
    - **"Is it the AI, or just more questions?"** We trained the same model on only the ADA's 5 questions to separate the gain from better weights and the gain from extra questions.
    - **A UAE stress test (simulation):** we simulated a population where diabetics have a lower BMI (as is common in South Asian populations), measured how much the app's recall drops, and tested a simple BMI adjustment.
+   - **A shorter 9-question version:** we retrained without physical activity and smoking to see if the screening can be faster.
 
 ## How it works
 
@@ -140,6 +141,17 @@ All thresholds were chosen on the validation set, then the test set was reported
 
 - If UAE diabetics are leaner, the app could **miss 300 more diabetics**. A BMI adjustment (chosen on validation) recovers them, but costs **2,608 extra false alarms**.
 - Because we built the 2.5 gap ourselves, the fix is almost guaranteed to work in the simulation. This shows the size of the risk, not the right adjustment. **Only real UAE data with blood tests can measure it.** The app was not changed.
+
+**Do we need all 11 questions?** Physical activity and smoking added almost nothing (Section 12), so we retrained without them (thresholds chosen on validation, as for the main model):
+
+| Test set | Recall | Diabetics missed | False alarms | ROC-AUC |
+|---|---|---|---|---|
+| 11 questions, single threshold | 84.9% | 1,065 | 16,145 | 0.815 |
+| 9 questions, single threshold | 84.8% | 1,071 | 16,169 | 0.815 |
+| 11 questions, app version | 88.3% | 829 | 20,066 | 0.815 |
+| 9 questions, app version | 88.2% | 836 | 20,071 | 0.815 |
+
+- The 9-question version is practically identical (6-7 more missed out of 7,069, ROC-AUC down 0.0001), so the screening could be **2 questions shorter**. We kept 11 questions in the app for now, because they're quick to ask and useful for health advice, and UAE data should confirm the result first.
 
 ## What we'd do next
 
