@@ -16,7 +16,7 @@
 
 ## The problem
 
-The International Diabetes Federation estimates that about 64% of adults with diabetes in the UAE don't know they have it. Undiagnosed type 2 diabetes can quietly damage the eyes, kidneys, nerves and heart for years, yet many people never get the HbA1c blood test that would find it.
+The International Diabetes Federation estimates that about 64% of adults with diabetes in the UAE don't know they have it ([IDF Diabetes Atlas, UAE](https://diabetesatlas.org/data-by-location/country/united-arab-emirates/)). Undiagnosed type 2 diabetes can quietly damage the eyes, kidneys, nerves and heart for years, yet many people never get the HbA1c blood test that would find it.
 
 ## What we built
 
@@ -102,7 +102,7 @@ By sex the gap was small (recall: women 83.7%, men 86.3%). **By age there was a 
 | 60-69 | 88.8% (unchanged) | 47.0% (unchanged) |
 | 70+ | 91.4% (unchanged) | 68.0% (unchanged) |
 
-**The fix and its cost:** lower thresholds for the three younger groups (chosen on validation) catch **236 more diabetics** but cause **3,921 more false alarms**, about **17 extra blood tests per extra diabetic caught**. We chose the fix for the app because missing young diabetics would fail many of the people the tool is for, and an HbA1c test is cheap. The young-group threshold is based on only about 260 young diabetics, so it's less precise.
+**The fix and its cost:** lower thresholds for the three younger groups (chosen on validation) catch **236 more diabetics** but cause **3,921 more false alarms**, about **17 extra blood tests per extra diabetic caught**. We chose the fix for the app because missing young diabetics would fail many of the people the tool is for, and an HbA1c test is cheap. This matters especially in our region: IDF data show diabetes is about twice as common among under-40s in the Middle East and North Africa as in Europe, suggesting earlier onset ([International Journal of Endocrinology, 2021](https://doi.org/10.1155/2021/6661346)). The young-group threshold is based on only about 260 young diabetics, so it's less precise.
 
 ### 4. What matters most, and where it fails
 
@@ -131,7 +131,7 @@ All thresholds were chosen on the validation set, then the test set was reported
 - At the same recall as the ADA (about 81%), the 5-question model flags 45.0% of people and the 11-question model 38.9%, vs 47.7% for ADA.
 - The learned weights suggest high blood pressure deserves about as much weight as age and BMI, while the ADA checklist gives it less.
 
-**UAE stress test (a simulation, not real UAE data).** People of Asian origin tend to develop type 2 diabetes at a lower BMI (a WHO expert consultation suggested BMI action points of about 23 and 27.5 for Asian populations, instead of 25 and 30). We lowered every test diabetic's BMI by 2.5 and ran the app version:
+**UAE stress test (a simulation, not real UAE data).** People of Asian origin tend to develop type 2 diabetes at a lower BMI (a WHO expert consultation suggested BMI action points of about 23 and 27.5 for Asian populations, instead of 25 and 30: [The Lancet, 2004](https://doi.org/10.1016/S0140-6736(03)15268-3)). We lowered every test diabetic's BMI by 2.5 and ran the app version:
 
 | Test set | Recall | Diabetics missed | False alarms | % flagged |
 |---|---|---|---|---|
@@ -166,7 +166,10 @@ All thresholds were chosen on the validation set, then the test set was reported
 
 - **Dataset:** CDC Diabetes Health Indicators (BRFSS 2015), UCI Machine Learning Repository, id 891: https://archive.ics.uci.edu/dataset/891/cdc+diabetes+health+indicators
 - **3-class version counts** (used for the prediabetes check): Diabetes Health Indicators Dataset on Kaggle: https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset
-- **UAE statistic:** IDF Diabetes Atlas (International Diabetes Federation): https://diabetesatlas.org/
+- **UAE statistic (64% undiagnosed, 2024 estimate):** IDF Diabetes Atlas, United Arab Emirates: https://diabetesatlas.org/data-by-location/country/united-arab-emirates/
+- **Earlier onset in the Middle East and North Africa:** "Greater and More Focused Measures Are Needed to Tackle Diabetes and Obesity Epidemics in the Nations of the Gulf Cooperation Council", *International Journal of Endocrinology*, 2021: https://doi.org/10.1155/2021/6661346
+- **Asian BMI cut-offs:** WHO Expert Consultation, "Appropriate body-mass index for Asian populations and its implications for policy and intervention strategies", *The Lancet* 363:157-163, 2004: https://doi.org/10.1016/S0140-6736(03)15268-3
+- **Related work (a UAE risk score):** "Diabetes risk score in the United Arab Emirates: a screening tool for the early detection of type 2 diabetes mellitus", *BMJ Open Diabetes Research & Care*, 2018: https://doi.org/10.1136/bmjdrc-2017-000489
 - **ADA Type 2 Diabetes Risk Test:** American Diabetes Association: https://diabetes.org/diabetes-risk-test
 - **Libraries:** scikit-learn, pandas, NumPy, matplotlib, Gradio, ucimlrepo (and joblib listed in requirements)
 - **Tools:** Google Colab (running the notebook), GitHub and GitHub Desktop
