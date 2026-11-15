@@ -2,7 +2,7 @@
 
 **Track:** Health
 
-**Team:** _(add team member names here)_
+**Team:** (Siwan Ahn and Shrey Rupareliya)
 
 > **This project is a prototype and is not medical advice.**
 
