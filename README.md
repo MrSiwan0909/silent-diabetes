@@ -29,7 +29,7 @@ A one-minute screening tool for a **pharmacist in Dubai** (or a volunteer at a m
 
 ## What we added
 
-Beyond training a model, we added:
+**Our own idea** (not one of the suggested projects). Beyond training a model, we added:
 
 1. **Our own user:** a UAE pharmacist screening customers in under a minute, with an English/Arabic app built around that.
 2. **The American Diabetes Association (ADA) checklist as a baseline:** we rebuilt 5 of the 7 questions of the ADA Type 2 Diabetes Risk Test from the data, and compared fairly at the *same workload* (same share of people flagged). We state clearly that 2 ADA questions (family history and gestational diabetes) aren't in the data.

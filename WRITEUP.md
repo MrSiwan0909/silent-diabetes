@@ -16,6 +16,8 @@ A one-minute screening tool for a **pharmacist in Dubai**. The customer answers 
 
 ## What we added
 
+**Our own idea** (not one of the suggested projects). On top of a working model, we added:
+
 - **A real baseline:** we rebuilt the American Diabetes Association (ADA) risk checklist from the data (5 of its 7 questions) and compared at the same workload.
 - **A deliberate threshold:** missing a diabetic is worse than a false alarm, so we chose the threshold on the validation set to catch 85% of diabetics.
 - **A fairness check:** the model missed about half of diabetics under 40. We fixed it with age-group thresholds and measured the cost.
